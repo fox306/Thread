@@ -98,3 +98,59 @@ export async function fetchThreadById(id: string) {
         throw new Error(`Erro fetching thread: ${error.message}`);
     }
 }
+
+export async function addCommentToThread(threadId: string, commentText: string, userId: string, path: string) {
+    connectToDB();
+    try {
+        //Find the original thread by its Id
+        const originalThread = await Thread.findById(threadId);
+
+        if (!originalThread) {
+            throw new Error('Thread not found');
+        }
+
+        //Create new Thread
+        const commentThread = new Thread({
+            text: commentText,
+            author: userId,
+            parentId: threadId,
+        });
+
+        //Save the new Thread
+        const savedCommentThread = await commentThread.save();
+
+        //Update the original thread to include the new comment
+        originalThread.children.push(savedCommentThread._id);
+
+        //Save the original thread
+        await originalThread.save();
+
+        revalidatePath(path);
+    } catch (error: any) {
+        throw new Error(`Error adding comment to thread: ${error.message}`);
+    }
+}
+
+export async function fetchUserPosts(userId: string) {
+    try {
+        connectToDB();
+
+        //Find all threads authored by user with the given userId
+        const threads = await User.findOne({ id: userId }).populate({
+            path: 'threads',
+            model: Thread,
+            populate: {
+                path: 'children',
+                model: Thread,
+                populate: {
+                    path: 'author',
+                    model: User,
+                    select: 'name image id',
+                },
+            },
+        });
+        return threads;
+    } catch (error: any) {
+        throw new Error(`Error fetching User Posts: ${error.message}`);
+    }
+}
