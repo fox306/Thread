@@ -1,7 +1,11 @@
 import React from 'react';
 
 const CommunitiesPage = () => {
-    return <div>CommunitiesPage</div>;
+    return (
+        <section>
+            <h1 className="head-text mb-10">Communities</h1>
+        </section>
+    );
 };
 
 export default CommunitiesPage;
