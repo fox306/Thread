@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { updateUser } from '@/lib/actions/user.actions';
 import { usePathname, useRouter } from 'next/navigation';
 import { createThread } from '@/lib/actions/thread.actions';
+import { useOrganization } from '@clerk/shared';
 
 interface Props {
     user: {
@@ -26,6 +27,7 @@ interface Props {
 const PostThread = ({ userId }: { userId: string }) => {
     const pathname = usePathname();
     const router = useRouter();
+    const { organization } = useOrganization();
 
     const form = useForm<z.infer<typeof ThreadValidation>>({
         resolver: zodResolver(ThreadValidation),
@@ -36,7 +38,12 @@ const PostThread = ({ userId }: { userId: string }) => {
     });
 
     const onSubmit = async (values: z.infer<typeof ThreadValidation>) => {
-        await createThread({ text: values.thread, author: userId, communityId: null, path: pathname });
+        await createThread({
+            text: values.thread,
+            author: userId,
+            communityId: organization ? organization.id : null,
+            path: pathname,
+        });
 
         router.push('/');
     };
